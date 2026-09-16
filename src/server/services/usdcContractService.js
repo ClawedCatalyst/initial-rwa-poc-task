@@ -1,5 +1,7 @@
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
-const ETHEREUM_MAINNET_CHAIN_ID = 1;
+const {
+  USDC_CONTRACT,
+  CONTRACT_READ_ERROR_CODES
+} = require('../constants/usdc');
 
 class ContractReadError extends Error {
   constructor(code, cause) {
@@ -12,11 +14,11 @@ class ContractReadError extends Error {
 function formatTokenAmount(rawAmount, decimals) {
   // JavaScript numbers can already have lost precision before formatting.
   if (typeof rawAmount === 'number') {
-    throw new ContractReadError('INVALID_CHAIN_RESPONSE');
+    throw new ContractReadError(CONTRACT_READ_ERROR_CODES.INVALID_CHAIN_RESPONSE);
   }
   const amount = rawAmount?.toString();
   if (!/^\d+$/.test(amount)) {
-    throw new ContractReadError('INVALID_CHAIN_RESPONSE');
+    throw new ContractReadError(CONTRACT_READ_ERROR_CODES.INVALID_CHAIN_RESPONSE);
   }
 
   const scale = 10n ** BigInt(decimals);
@@ -39,29 +41,29 @@ function createUsdcContractService(reader) {
       try {
         // The reader owns the RPC calls and must read all values at one block.
         snapshot = await reader.readTokenSnapshot({
-          chainId: ETHEREUM_MAINNET_CHAIN_ID,
-          contractAddress: USDC_ADDRESS
+          chainId: USDC_CONTRACT.chainId,
+          contractAddress: USDC_CONTRACT.address
         });
       } catch (error) {
         if (error instanceof ContractReadError) throw error;
-        throw new ContractReadError('RPC_UNAVAILABLE', error);
+        throw new ContractReadError(CONTRACT_READ_ERROR_CODES.RPC_UNAVAILABLE, error);
       }
 
       const { chainId, blockNumber, name, symbol, decimals, totalSupply } = snapshot || {};
       if (
-        chainId !== ETHEREUM_MAINNET_CHAIN_ID ||
+        chainId !== USDC_CONTRACT.chainId ||
         !Number.isSafeInteger(blockNumber) || blockNumber < 0 ||
         typeof name !== 'string' || !name.trim() ||
         typeof symbol !== 'string' || !symbol.trim() ||
-        !Number.isInteger(decimals) || decimals < 0 || decimals > 255
+        !Number.isInteger(decimals) || decimals < 0 || decimals > USDC_CONTRACT.maxDecimals
       ) {
-        throw new ContractReadError('INVALID_CHAIN_RESPONSE');
+        throw new ContractReadError(CONTRACT_READ_ERROR_CODES.INVALID_CHAIN_RESPONSE);
       }
 
       return {
-        chainId: ETHEREUM_MAINNET_CHAIN_ID,
-        network: 'ethereum-mainnet',
-        contractAddress: USDC_ADDRESS,
+        chainId: USDC_CONTRACT.chainId,
+        network: USDC_CONTRACT.network,
+        contractAddress: USDC_CONTRACT.address,
         name,
         symbol,
         decimals,

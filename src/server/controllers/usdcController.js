@@ -1,4 +1,9 @@
 const { ContractReadError } = require('../services/usdcContractService');
+const {
+  CONTRACT_READ_ERROR_CODES,
+  ERROR_RESPONSES,
+  LOG_MESSAGES
+} = require('../constants/usdc');
 
 function createUsdcController(service, logger = console) {
   if (!service || typeof service.getMetadata !== 'function') {
@@ -8,27 +13,17 @@ function createUsdcController(service, logger = console) {
   return async function getUsdcMetadata(req, res) {
     try {
       const data = await service.getMetadata();
-      logger.log('USDC contract data:', data);
+      logger.log(LOG_MESSAGES.success, data);
       res.json(data);
     } catch (error) {
-      const code = error instanceof ContractReadError ? error.code : 'INTERNAL_ERROR';
-      logger.error('USDC contract read failed:', code);
-
-      if (code === 'RPC_UNAVAILABLE') {
-        return res.status(503).json({
-          error: code,
-          message: 'Ethereum contract data is temporarily unavailable.'
-        });
-      }
-      if (code === 'INVALID_CHAIN_RESPONSE') {
-        return res.status(502).json({
-          error: code,
-          message: 'Ethereum contract data could not be validated.'
-        });
-      }
-      return res.status(500).json({
-        error: 'INTERNAL_ERROR',
-        message: 'An unexpected server error occurred.'
+      const code = error instanceof ContractReadError && ERROR_RESPONSES[error.code]
+        ? error.code
+        : CONTRACT_READ_ERROR_CODES.INTERNAL_ERROR;
+      logger.error(LOG_MESSAGES.failure, code);
+      const { status, message } = ERROR_RESPONSES[code];
+      return res.status(status).json({
+        error: code,
+        message
       });
     }
   };
