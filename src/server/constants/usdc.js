@@ -10,6 +10,18 @@ const USDC_API_PATHS = Object.freeze({
   assessment: '/api/SuhailApiTest'
 });
 
+const USDC_ABI = Object.freeze([
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)',
+  'function totalSupply() view returns (uint256)'
+]);
+
+const RPC_SETTINGS = Object.freeze({
+  defaultUrl: 'https://ethereum-rpc.publicnode.com',
+  timeoutMs: 10000
+});
+
 const CONTRACT_READ_ERROR_CODES = Object.freeze({
   RPC_UNAVAILABLE: 'RPC_UNAVAILABLE',
   INVALID_CHAIN_RESPONSE: 'INVALID_CHAIN_RESPONSE',
@@ -45,6 +57,8 @@ const LOG_MESSAGES = Object.freeze({
 module.exports = {
   USDC_CONTRACT,
   USDC_API_PATHS,
+  USDC_ABI,
+  RPC_SETTINGS,
   CONTRACT_READ_ERROR_CODES,
   ERROR_RESPONSES,
   LOG_MESSAGES

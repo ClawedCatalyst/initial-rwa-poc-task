@@ -88,3 +88,24 @@ Errors use this JSON shape:
 Provider URLs, credentials, and raw provider errors must not appear in client
 responses. Unexpected internal failures follow the server's existing `500`
 error handler.
+
+## Backend RPC configuration
+
+The primary RPC defaults to `https://ethereum-rpc.publicnode.com` for local
+demonstration. Set `ETHEREUM_RPC_URL` to an Ethereum mainnet HTTPS JSON-RPC URL
+to use a managed provider. Set `ETHEREUM_FALLBACK_RPC_URL` to a second URL if
+failover is needed. Local HTTP URLs are accepted only for loopback testing.
+Each provider has a 10-second request timeout; the fallback is attempted once
+when the primary is unavailable. An invalid chain response is returned as an
+error rather than retried on another provider.
+
+To verify the delivery locally, start the backend and call either route:
+
+```bash
+npm run dev:backend
+curl --fail-with-body http://localhost:3001/api/v1/blockchain/ethereum/usdc/metadata
+curl --fail-with-body http://localhost:3001/api/SuhailApiTest
+```
+
+The response should contain live contract data, and the backend console should
+print the same object.

@@ -5,6 +5,12 @@ const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const { USDC_API_PATHS } = require('./constants/usdc');
+const { createRpcProviders } = require('./integrations/ethereum/providerFactory');
+const { createEthersRpcReader } = require('./integrations/ethereum/ethersRpcReader');
+const { createReadStrategy } = require('./integrations/ethereum/readStrategies');
+const { createUsdcContractService } = require('./services/usdcContractService');
+const { createUsdcController } = require('./controllers/usdcController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,6 +54,12 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0'
   });
 });
+
+const usdcReaders = createRpcProviders().map((provider) => createEthersRpcReader(provider));
+const usdcService = createUsdcContractService(createReadStrategy(usdcReaders));
+const getUsdcMetadata = createUsdcController(usdcService);
+app.get(USDC_API_PATHS.canonical, getUsdcMetadata);
+app.get(USDC_API_PATHS.assessment, getUsdcMetadata);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
